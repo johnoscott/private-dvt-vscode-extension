@@ -1,0 +1,164 @@
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'dbt_infomart'
+version: '1.0.0'
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'dbt_infomart'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+# In this example config, we tell dbt to build all models in the example/
+# directory as views. These settings can be overridden in the individual model
+# files using the `{{ config(...) }}` macro.
+models:
+  dbt_infomart:
+    # Config indicated by + and applies to all files under models/example/
+    infomart:
+
+      # infomart defaults
+      +materialized: dynamic_table
+      +snowflake_warehouse: VAULTSPEED_WH_DYNAMIC_TABLES
+      +target_lag: 'DOWNSTREAM'
+      +refresh_mode: AUTO
+      +initialize: ON_CREATE
+      +on_configuration_change: apply
+      +enable_automatic_clustering: true
+      +schema: infomart
+      +tags:
+        - infomart
+      dims_curr:
+        +target_lag: '2 days'
+        +refresh_mode: 'FULL'
+        +tags:
+          - dim
+        +schema: infomart_schema
+      exceptions:
+        +tags:
+          - exception
+        +schema: infomart_exception
+      facts_curr:
+        fact_client_visits_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          bridge:
+            +materialized: view
+            +tags:
+              - bridge
+            +schema: infomart_bridge
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+        fact_headcount_monthly_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+        fact_headcount_weekly_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+        fact_match_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+        fact_phone_calls_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          link:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - link
+            +schema: infomart_link
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+        fact_placement_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+        fact_reqs_curr:
+          +target_lag: '2 days'
+          +refresh_mode: 'FULL'
+          +tags:
+            - fact
+          +schema: infomart_schema
+          metric:
+            +target_lag: 'DOWNSTREAM'
+            +tags:
+              - metric
+            +schema: infomart_metric
+    generated: # new location in models/generated
+      +schema: infomart_generated_lost_and_found
+      +tags:
+        - generated
+      current_active_sats_bvv:
+        +refresh_mode: 'FULL'
+        +schema: infomart_current_active_sats_bvv
+        +tags:
+        - current_active_sats_bvv
+      current_active_sats:
+        +refresh_mode: 'FULL'
+        +schema: infomart_current_active_sats
+        +tags:
+        - current_active_sats
+      current_relationship_links_pk:
+        +refresh_mode: 'FULL'
+        +schema: infomart_current_relationship_links_pk
+        +tags:
+        - current_relationship_links_pk

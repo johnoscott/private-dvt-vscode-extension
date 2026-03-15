@@ -1,0 +1,20 @@
+{{ config(
+    materialized = 'table',
+    transient=false
+) }}
+
+WITH temp_weeks AS (
+    SELECT DISTINCT 
+        CONCAT(YEAR(EUROENDDAYOFWEEK), '-', WEEKOFYEAR(EUROENDDAYOFWEEK)) AS WEEK_KEY,
+        DATEADD(DAY, -6, EUROENDDAYOFWEEK) AS EURO_START_DAY_OF_WEEK,
+        EUROENDDAYOFWEEK AS EURO_END_DAY_OF_WEEK,
+        YEAR(EUROENDDAYOFWEEK) AS CALENDAR_YEAR,
+        DENSE_RANK() OVER (PARTITION BY YEAR(EUROENDDAYOFWEEK) ORDER BY EUROENDDAYOFWEEK) AS week_number
+    FROM {{ source('eli_dv_bv', 'ref_rt_ref_calendar') }}
+)
+SELECT 
+    CONCAT(YEAR(EURO_END_DAY_OF_WEEK), '-', week_number) AS WEEK_KEY,
+    EURO_START_DAY_OF_WEEK,
+    EURO_END_DAY_OF_WEEK,
+    CALENDAR_YEAR
+FROM temp_weeks
