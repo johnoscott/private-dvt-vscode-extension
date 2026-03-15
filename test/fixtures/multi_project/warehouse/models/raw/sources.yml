@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: app_db
+    description: Application database replicated via CDC
+    tables:
+      - name: users
+        description: User accounts
+        columns:
+          - name: id
+            description: Primary key
+          - name: email
+            description: User email
+          - name: name
+            description: Display name
+          - name: created_at
+            description: Account creation timestamp
+
+      - name: events
+        description: User event stream
+        columns:
+          - name: id
+            description: Primary key
+          - name: user_id
+            description: Foreign key to users
+          - name: type
+            description: Event type
+          - name: properties
+            description: Event properties (JSON)
+          - name: timestamp
+            description: Event timestamp
+
+      - name: products
+        description: Product catalog
+        columns:
+          - name: id
+            description: Primary key
+          - name: name
+            description: Product name
+          - name: category
+            description: Product category
+          - name: price
+            description: Price in cents

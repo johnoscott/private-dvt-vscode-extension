@@ -1,0 +1,88 @@
+{
+  "name": "dvt",
+  "displayName": "DVT - Data Visualization & Transformation",
+  "description": "Modern dbt IDE with SQL-first lineage, interactive DAG, and instant docs",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/dbt_project.yml"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "jinja-sql",
+        "aliases": [
+          "Jinja SQL",
+          "dbt SQL"
+        ],
+        "extensions": [],
+        "configuration": "./language/jinja-sql-language-configuration.json",
+        "icon": {
+          "light": "./icons/dbt-file.svg",
+          "dark": "./icons/dbt-file.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "jinja-sql",
+        "scopeName": "source.sql.jinja",
+        "path": "./syntaxes/jinja-sql.tmLanguage.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "dvt-dbt-icons",
+        "label": "DVT dbt Icons",
+        "path": "./icons/dvt-icon-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "dvt.showManifest",
+        "title": "DVT: Show Manifest"
+      },
+      {
+        "command": "dvt.showLineageSummary",
+        "title": "DVT: Show Lineage Summary"
+      },
+      {
+        "command": "dvt.showModelInfo",
+        "title": "DVT: Inspect Model"
+      },
+      {
+        "command": "dvt.rebuild",
+        "title": "DVT: Rebuild Manifest"
+      },
+      {
+        "command": "dvt.selectProject",
+        "title": "DVT: Select Project"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "npm run build -- --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0"
+  }
+}

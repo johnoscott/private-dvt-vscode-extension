@@ -1,0 +1,51 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    description: Raw data from the jaffle shop application database
+    tables:
+      - name: raw_customers
+        description: Raw customer data
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: first_name
+            description: Customer first name
+          - name: last_name
+            description: Customer last name
+
+      - name: raw_orders
+        description: Raw order data
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: user_id
+            description: Foreign key to customers
+          - name: order_date
+            description: Date the order was placed
+          - name: status
+            description: Order status
+            tests:
+              - accepted_values:
+                  values: ['placed', 'shipped', 'completed', 'return_pending', 'returned']
+
+      - name: raw_payments
+        description: Raw payment data from the payment processor
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: order_id
+            description: Foreign key to orders
+          - name: payment_method
+            description: Payment method used
+          - name: amount
+            description: Amount in cents

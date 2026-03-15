@@ -1,0 +1,60 @@
+
+
+-- Model: sat_oa_timesheet_curr
+-- Description: Current active record for TIMESHEET from SAT_OA_TIMESHEET
+-- Generated: 2025-05-19 21:48:09
+
+WITH MAX_DATE AS (
+    SELECT
+        TIMESHEET_HKEY,
+        MAX() AS MAX_TRANS_DATE
+    FROM {{ source('eli_dv_rv', 'sat_oa_timesheet') }}
+    WHERE DELETE_FLAG = 'N'
+    GROUP BY TIMESHEET_HKEY
+)
+
+SELECT
+    SAT_SRC.TIMESHEET_HKEY,
+    -- tagged: is_other_attr
+    ACCT_DATE,
+    ASSOCIATED_TM_ID,
+    ATTACHMENT_ID,
+    AUDIT,
+    CREATED,
+    CUSTOM_113,
+    CUSTOM_114,
+    DATE_APPROVED,
+    DATE_ARCHIVED,
+    DATE_END,
+    DATE_START,
+    DATE_SUBMITTED,
+    DEFAULT_CATEGORY,
+    DEFAULT_CUSTOMER,
+    DEFAULT_PAYROLL_TYPE,
+    DEFAULT_PER_ROW,
+    DEFAULT_PROJECT,
+    DEFAULT_TASK,
+    DEFAULT_TIMETYPE,
+    DELETED,
+    DURATION,
+    EXPORTED,
+    HISTORY,
+    NAME,
+    NOTES,
+    PARENT_TIMESHEET_ID,
+    START_END_MONTH_TS,
+    STATUS,
+    SUBMIT_WARNING,
+    THIN_CLIENT_ID,
+    TOTAL,
+    UNSAVED_DATA,
+    UPDATED,
+    USER_ID,
+    _FIVETRAN_ACTIVE,
+    _FIVETRAN_END,
+    _FIVETRAN_START
+FROM {{ source('eli_dv_rv', 'sat_oa_timesheet') }} SAT_SRC
+INNER JOIN MAX_DATE MD
+    ON SAT_SRC.TIMESHEET_HKEY = MD.TIMESHEET_HKEY
+    AND SAT_SRC. = MD.MAX_TRANS_DATE
+    AND SAT_SRC.DELETE_FLAG = 'N'

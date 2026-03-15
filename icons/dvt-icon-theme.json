@@ -1,0 +1,82 @@
+{
+  "hidesExplorerArrows": false,
+  "iconDefinitions": {
+    "_dbt_file": {
+      "iconPath": "./dbt-file.svg"
+    },
+    "_dbt_yaml": {
+      "iconPath": "./dbt-yaml.svg"
+    },
+    "_dbt_project_folder": {
+      "iconPath": "./dbt-project-folder.svg"
+    },
+    "_dbt_project_folder_open": {
+      "iconPath": "./dbt-project-folder-open.svg"
+    },
+    "_model": {
+      "iconPath": "./model.svg"
+    },
+    "_source": {
+      "iconPath": "./source.svg"
+    },
+    "_seed": {
+      "iconPath": "./seed.svg"
+    },
+    "_test": {
+      "iconPath": "./test.svg"
+    },
+    "_snapshot": {
+      "iconPath": "./snapshot.svg"
+    }
+  },
+  "fileExtensions": {
+    "sql": "_dbt_file",
+    "yml": "_dbt_yaml",
+    "yaml": "_dbt_yaml"
+  },
+  "languageIds": {
+    "jinja-sql": "_dbt_file"
+  },
+  "fileNames": {
+    "dbt_project.yml": "_dbt_file",
+    "dbt_project.yaml": "_dbt_file",
+    "packages.yml": "_dbt_yaml",
+    "packages.yaml": "_dbt_yaml",
+    "profiles.yml": "_dbt_yaml",
+    "profiles.yaml": "_dbt_yaml",
+    "selectors.yml": "_dbt_yaml",
+    "selectors.yaml": "_dbt_yaml",
+    "schema.yml": "_dbt_yaml",
+    "schema.yaml": "_dbt_yaml",
+    "sources.yml": "_dbt_yaml",
+    "sources.yaml": "_dbt_yaml"
+  },
+  "fileNamesExpansions": {
+    "schema_*.yml": "_dbt_yaml",
+    "schema_*.yaml": "_dbt_yaml",
+    "*_sources.yml": "_dbt_yaml",
+    "*_sources.yaml": "_dbt_yaml"
+  },
+  "folderNames": {
+    "models": "_model",
+    "seeds": "_seed",
+    "macros": "_dbt_file",
+    "tests": "_test",
+    "snapshots": "_snapshot",
+    "analyses": "_model",
+    "sources": "_source",
+    "analytics": "_dbt_project_folder",
+    "warehouse": "_dbt_project_folder"
+  },
+  "folderNamesExpanded": {
+    "models": "_model",
+    "seeds": "_seed",
+    "macros": "_dbt_file",
+    "tests": "_test",
+    "snapshots": "_snapshot",
+    "analyses": "_model",
+    "sources": "_source",
+    "analytics": "_dbt_project_folder_open",
+    "warehouse": "_dbt_project_folder_open"
+  }
+}

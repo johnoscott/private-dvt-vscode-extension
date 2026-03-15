@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: customers
+    description: >
+      One record per customer with aggregated order and payment information.
+      This is the core customer table for the jaffle shop.
+    columns:
+      - name: customer_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: Customer first name
+      - name: last_name
+        description: Customer last name
+      - name: first_order_date
+        description: Date of the customer's first order
+      - name: most_recent_order_date
+        description: Date of the customer's most recent order
+      - name: number_of_orders
+        description: Total number of orders placed by the customer
+      - name: lifetime_value
+        description: Total amount spent by the customer across all orders
+
+  - name: orders
+    description: >
+      One record per order with payment information joined in.
+      Includes payment totals broken out by payment method.
+    columns:
+      - name: order_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key to customers
+      - name: order_date
+        description: Date the order was placed
+      - name: status
+        description: Order status
+      - name: amount
+        description: Total payment amount for this order
+      - name: credit_card_amount
+        description: Amount paid by credit card
+      - name: coupon_amount
+        description: Amount paid by coupon
+      - name: bank_transfer_amount
+        description: Amount paid by bank transfer
+      - name: gift_card_amount
+        description: Amount paid by gift card
