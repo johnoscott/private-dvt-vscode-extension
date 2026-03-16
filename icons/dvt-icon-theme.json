@@ -66,7 +66,8 @@
     "analyses": "_model",
     "sources": "_source",
     "analytics": "_dbt_project_folder",
-    "warehouse": "_dbt_project_folder"
+    "warehouse": "_dbt_project_folder",
+    "dbt_infomart": "_dbt_project_folder"
   },
   "folderNamesExpanded": {
     "models": "_model",
@@ -77,6 +78,7 @@
     "analyses": "_model",
     "sources": "_source",
     "analytics": "_dbt_project_folder_open",
-    "warehouse": "_dbt_project_folder_open"
+    "warehouse": "_dbt_project_folder_open",
+    "dbt_infomart": "_dbt_project_folder_open"
   }
 }

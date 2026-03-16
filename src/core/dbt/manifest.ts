@@ -1,6 +1,6 @@
 import { DirectedGraph } from '../graph/directed-graph.js';
 import type { DbtProject } from './dbt-project.js';
-import type { DbtModel, DbtSource, DbtRef } from './types.js';
+import type { DbtModel, DbtSource, DbtRef, DbtColumn } from './types.js';
 
 /**
  * DVT Manifest — a lightweight alternative to dbt's manifest.json.
@@ -42,6 +42,7 @@ export interface DvtManifestNode {
   description?: string;
   materialization?: string;
   tags?: string[];
+  columns?: DbtColumn[];
   /** Folder path within model-paths (e.g., "staging", "marts") */
   folder: string;
 }
@@ -53,6 +54,7 @@ export interface DvtManifestSource {
   description?: string;
   database?: string;
   schema?: string;
+  columns?: DbtColumn[];
 }
 
 /**
@@ -80,6 +82,7 @@ export function buildManifest(project: DbtProject): DvtManifest {
       description: model.description,
       materialization: model.materialization,
       tags: model.tags,
+      columns: model.columns,
       folder,
     };
   }
@@ -93,6 +96,7 @@ export function buildManifest(project: DbtProject): DvtManifest {
       description: source.description,
       database: source.database,
       schema: source.schema,
+      columns: source.columns,
     };
   }
 

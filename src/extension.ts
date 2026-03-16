@@ -5,6 +5,14 @@ import { DbtProject } from './core/dbt/dbt-project.js';
 import { buildManifest, manifestToGraph } from './core/dbt/manifest.js';
 import { findDbtProjectsInDir, findProjectRoot } from './core/dbt/find-projects.js';
 import type { DvtManifest, DvtManifestNode } from './core/dbt/manifest.js';
+import { LineagePanel, LineageViewProvider } from './extension/lineage-panel.js';
+import { DbtDefinitionProvider } from './extension/providers/definition-provider.js';
+import { DbtHoverProvider } from './extension/providers/hover-provider.js';
+import { DbtDocumentLinkProvider } from './extension/providers/link-provider.js';
+import { DbtCompletionProvider } from './extension/providers/completion-provider.js';
+import { DbtDiagnosticsProvider } from './extension/providers/diagnostics-provider.js';
+import { DocsPanel } from './extension/docs-panel.js';
+import { DbtRunner } from './extension/dbt-runner.js';
 
 interface ManagedProject {
   root: string;
@@ -15,6 +23,11 @@ interface ManagedProject {
 let outputChannel: vscode.OutputChannel;
 let statusBarItem: vscode.StatusBarItem;
 let managedProjects: ManagedProject[] = [];
+let lineagePanel: LineagePanel;
+let lineageViewProvider: LineageViewProvider;
+let diagnosticsProvider: DbtDiagnosticsProvider;
+let docsPanel: DocsPanel;
+let dbtRunner: DbtRunner;
 
 export function activate(context: vscode.ExtensionContext) {
   outputChannel = vscode.window.createOutputChannel('DVT');
@@ -47,13 +60,60 @@ export function activate(context: vscode.ExtensionContext) {
     setJinjaSqlAssociation(context, mp.root);
   }
 
+  // Set context for 'when' clause in package.json
+  vscode.commands.executeCommand('setContext', 'dvt.hasProjects', true);
+
+  // Lineage panel (full editor tab)
+  lineagePanel = new LineagePanel(context.extensionUri, outputChannel);
+
+  // Lineage view (bottom panel tab)
+  lineageViewProvider = new LineageViewProvider(context.extensionUri, outputChannel);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(LineageViewProvider.viewType, lineageViewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
+  );
+
+  // Language providers (go-to-definition, hover, document links)
+  const jinjaSql = { language: 'jinja-sql' };
+  const resolveProject = (filePath: string) => {
+    const mp = projectForFile(filePath);
+    return mp ? { manifest: mp.manifest, root: mp.root } : undefined;
+  };
+
+  context.subscriptions.push(
+    vscode.languages.registerDefinitionProvider(jinjaSql, new DbtDefinitionProvider(resolveProject)),
+    vscode.languages.registerHoverProvider(jinjaSql, new DbtHoverProvider(resolveProject)),
+    vscode.languages.registerDocumentLinkProvider(jinjaSql, new DbtDocumentLinkProvider(resolveProject)),
+    vscode.languages.registerCompletionItemProvider(jinjaSql, new DbtCompletionProvider(resolveProject), "'", '"'),
+  );
+
+  // Diagnostics (broken ref/source warnings)
+  diagnosticsProvider = new DbtDiagnosticsProvider(resolveProject);
+  diagnosticsProvider.activate(context);
+
+  // Docs panel
+  docsPanel = new DocsPanel(outputChannel);
+
+  // dbt runner
+  dbtRunner = new DbtRunner(outputChannel);
+
   // Register commands
   context.subscriptions.push(
+    vscode.commands.registerCommand('dvt.showLineageGraph', () => showLineageGraph()),
     vscode.commands.registerCommand('dvt.showManifest', () => showManifestPanel()),
     vscode.commands.registerCommand('dvt.showLineageSummary', () => showLineageSummary()),
     vscode.commands.registerCommand('dvt.showModelInfo', () => showModelPicker()),
     vscode.commands.registerCommand('dvt.rebuild', () => rebuildAll()),
     vscode.commands.registerCommand('dvt.selectProject', () => selectProject()),
+    vscode.commands.registerCommand('dvt.showDocs', () => showDocs()),
+    vscode.commands.registerCommand('dvt.dbtRun', () => dbtCommand('run')),
+    vscode.commands.registerCommand('dvt.dbtTest', () => dbtCommand('test')),
+    vscode.commands.registerCommand('dvt.dbtBuild', () => dbtCommand('build')),
+    vscode.commands.registerCommand('dvt.dbtCompile', () => dbtCommand('compile')),
+    vscode.commands.registerCommand('dvt.dbtRunModel', () => dbtModelCommand('run')),
+    vscode.commands.registerCommand('dvt.dbtTestModel', () => dbtModelCommand('test')),
+    vscode.commands.registerCommand('dvt.dbtBuildModel', () => dbtModelCommand('build')),
   );
 
   // File watchers for each project
@@ -72,10 +132,16 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(watcher);
   }
 
-  // Track active editor to update status bar with current project context
+  // Track active editor to update status bar and lineage view
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => updateStatusBar()),
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      updateStatusBar();
+      updateLineageViewForEditor(editor);
+    }),
   );
+
+  // Initial lineage view update for current editor
+  updateLineageViewForEditor(vscode.window.activeTextEditor);
 
   // Update icon theme with discovered dbt project folder names
   updateIconThemeForProjects(context, managedProjects);
@@ -212,6 +278,29 @@ function updateStatusBar() {
   }
 }
 
+// --- Lineage View Tracking ---
+
+function updateLineageViewForEditor(editor: vscode.TextEditor | undefined) {
+  if (!editor || !lineageViewProvider) return;
+
+  const filePath = editor.document.uri.fsPath;
+  if (!filePath.endsWith('.sql')) return;
+
+  const mp = projectForFile(filePath);
+  if (!mp) return;
+
+  // Find the model node for this file
+  const fileName = filePath.split('/').pop()?.replace(/\.sql$/, '');
+  if (!fileName) return;
+
+  const nodeId = `model.${mp.manifest.project.name}.${fileName}`;
+  const node = mp.manifest.nodes[nodeId];
+  if (!node) return;
+
+  lineageViewProvider.setContext(mp.manifest, nodeId);
+  docsPanel.update(mp.manifest, nodeId);
+}
+
 // --- Language Association ---
 
 function setJinjaSqlAssociation(context: vscode.ExtensionContext, projectRoot: string) {
@@ -238,6 +327,27 @@ function setJinjaSqlAssociation(context: vscode.ExtensionContext, projectRoot: s
 }
 
 // --- Commands ---
+
+async function showLineageGraph() {
+  let mp: ManagedProject | undefined;
+
+  if (managedProjects.length === 1) {
+    mp = managedProjects[0];
+  } else {
+    const items = managedProjects.map((p) => ({
+      label: p.manifest.project.name,
+      description: `${p.manifest.stats.modelCount} models — ${p.root}`,
+      mp: p,
+    }));
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Select project for lineage graph',
+    });
+    if (!picked) return;
+    mp = picked.mp;
+  }
+
+  lineagePanel.show(mp.manifest, mp.root);
+}
 
 async function selectProject() {
   if (managedProjects.length <= 1) {
@@ -388,6 +498,74 @@ async function showModelPicker() {
   await vscode.window.showTextDocument(doc, { preview: true });
 }
 
+// --- Docs ---
+
+function showDocs() {
+  const mp = activeProject();
+  if (!mp) return;
+
+  // If a model file is open, show docs for that model
+  const editor = vscode.window.activeTextEditor;
+  let nodeId: string | undefined;
+  if (editor?.document.uri.fsPath.endsWith('.sql')) {
+    const fileName = editor.document.uri.fsPath.split('/').pop()?.replace(/\.sql$/, '');
+    if (fileName) nodeId = `model.${mp.manifest.project.name}.${fileName}`;
+  }
+
+  docsPanel.show(mp.manifest, nodeId);
+}
+
+// --- dbt Commands ---
+
+async function dbtCommand(command: string) {
+  let mp: ManagedProject | undefined;
+  if (managedProjects.length === 1) {
+    mp = managedProjects[0];
+  } else {
+    const items = managedProjects.map((p) => ({
+      label: p.manifest.project.name,
+      description: p.root,
+      mp: p,
+    }));
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder: `Select project for dbt ${command}`,
+    });
+    if (!picked) return;
+    mp = picked.mp;
+  }
+
+  switch (command) {
+    case 'run': return dbtRunner.runAll(mp.root);
+    case 'build': return dbtRunner.buildAll(mp.root);
+    default: return dbtRunner.run(mp.root, [command], command);
+  }
+}
+
+async function dbtModelCommand(command: string) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !editor.document.uri.fsPath.endsWith('.sql')) {
+    vscode.window.showWarningMessage('Open a dbt model .sql file first.');
+    return;
+  }
+
+  const mp = projectForFile(editor.document.uri.fsPath);
+  if (!mp) {
+    vscode.window.showWarningMessage('This file is not in a dbt project.');
+    return;
+  }
+
+  const modelName = editor.document.uri.fsPath.split('/').pop()?.replace(/\.sql$/, '');
+  if (!modelName) return;
+
+  switch (command) {
+    case 'run': return dbtRunner.runModel(mp.root, modelName);
+    case 'test': return dbtRunner.testModel(mp.root, modelName);
+    case 'build': return dbtRunner.buildModel(mp.root, modelName);
+  }
+}
+
+// --- Rebuild ---
+
 function rebuildProject(mp: ManagedProject) {
   try {
     const fresh = new DbtProject(mp.root);
@@ -395,6 +573,8 @@ function rebuildProject(mp: ManagedProject) {
     mp.project = fresh;
     Object.assign(mp.manifest, newManifest);
     updateStatusBar();
+    lineagePanel.update(mp.manifest);
+    diagnosticsProvider.revalidateAll();
     outputChannel.appendLine(
       `[${new Date().toLocaleTimeString()}] Rebuilt ${newManifest.project.name}: ${newManifest.stats.modelCount} models`,
     );

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import YAML from 'yaml';
-import type { DbtProjectConfig, DbtModel, DbtSource, DbtRef } from './types.js';
+import type { DbtProjectConfig, DbtModel, DbtSource, DbtRef, DbtColumn } from './types.js';
 import { extractDbtRefs } from './extract-refs.js';
 
 /**
@@ -126,6 +126,8 @@ export class DbtProject {
         try {
           const raw = fs.readFileSync(fullPath, 'utf-8');
           const doc = YAML.parse(raw);
+
+          // Parse sources
           if (doc?.sources) {
             for (const source of doc.sources) {
               const sourceName = source.name;
@@ -139,8 +141,23 @@ export class DbtProject {
                     description: table.description,
                     database: source.database,
                     schema: source.schema,
+                    columns: parseColumns(table.columns),
                   });
                 }
+              }
+            }
+          }
+
+          // Parse model descriptions and columns from schema YAML
+          if (doc?.models) {
+            for (const modelDef of doc.models) {
+              const modelName = modelDef.name;
+              const existing = this._models?.get(modelName);
+              if (existing) {
+                if (modelDef.description) existing.description = modelDef.description;
+                if (modelDef.columns) existing.columns = parseColumns(modelDef.columns);
+                if (modelDef.config?.tags) existing.tags = modelDef.config.tags;
+                if (modelDef.config?.materialized) existing.materialization = modelDef.config.materialized;
               }
             }
           }
@@ -150,4 +167,23 @@ export class DbtProject {
       }
     }
   }
+}
+
+function parseColumns(columns: any[] | undefined): DbtColumn[] | undefined {
+  if (!columns || !Array.isArray(columns)) return undefined;
+  return columns.map((col) => {
+    const tests: string[] = [];
+    if (col.tests) {
+      for (const t of col.tests) {
+        if (typeof t === 'string') tests.push(t);
+        else if (typeof t === 'object') tests.push(Object.keys(t)[0]);
+      }
+    }
+    return {
+      name: col.name,
+      description: col.description,
+      dataType: col.data_type,
+      tests: tests.length > 0 ? tests : undefined,
+    };
+  });
 }

@@ -10,6 +10,13 @@ export interface DbtProjectConfig {
   analysisPaths: string[];
 }
 
+export interface DbtColumn {
+  name: string;
+  description?: string;
+  dataType?: string;
+  tests?: string[];
+}
+
 export interface DbtModel {
   /** Unique ID: model.<project>.<name> */
   id: string;
@@ -26,6 +33,8 @@ export interface DbtModel {
   materialization?: string;
   /** Tags from config or YAML */
   tags?: string[];
+  /** Columns from schema YAML */
+  columns?: DbtColumn[];
 }
 
 export interface DbtSource {
@@ -39,6 +48,8 @@ export interface DbtSource {
   database?: string;
   /** Schema from YAML */
   schema?: string;
+  /** Columns from YAML */
+  columns?: DbtColumn[];
 }
 
 export interface DbtRef {
