@@ -1,0 +1,158 @@
+{
+  "name": "dvt",
+  "displayName": "DVT - Data Visualization & Transformation",
+  "description": "Modern dbt IDE with SQL-first lineage, interactive DAG, and instant docs",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/dbt_project.yml",
+    "onView:dvt.lineageView"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "jinja-sql",
+        "aliases": [
+          "Jinja SQL",
+          "dbt SQL"
+        ],
+        "extensions": [],
+        "configuration": "./language/jinja-sql-language-configuration.json",
+        "icon": {
+          "light": "./icons/dbt-file.svg",
+          "dark": "./icons/dbt-file.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "jinja-sql",
+        "scopeName": "source.sql.jinja",
+        "path": "./syntaxes/jinja-sql.tmLanguage.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "dvt-dbt-icons",
+        "label": "DVT dbt Icons",
+        "path": "./icons/dvt-icon-theme.json"
+      }
+    ],
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "dvt-lineage-panel",
+          "title": "Lineage",
+          "icon": "./icons/dbt-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "dvt-lineage-panel": [
+        {
+          "type": "webview",
+          "id": "dvt.lineageView",
+          "name": "Lineage"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "dvt.showLineageGraph",
+        "title": "DVT: Show Lineage Graph"
+      },
+      {
+        "command": "dvt.showManifest",
+        "title": "DVT: Show Manifest"
+      },
+      {
+        "command": "dvt.showLineageSummary",
+        "title": "DVT: Show Lineage Summary"
+      },
+      {
+        "command": "dvt.showModelInfo",
+        "title": "DVT: Inspect Model"
+      },
+      {
+        "command": "dvt.rebuild",
+        "title": "DVT: Rebuild Manifest"
+      },
+      {
+        "command": "dvt.selectProject",
+        "title": "DVT: Select Project"
+      },
+      {
+        "command": "dvt.showDocs",
+        "title": "DVT: Show Docs"
+      },
+      {
+        "command": "dvt.dbtRun",
+        "title": "DVT: dbt run"
+      },
+      {
+        "command": "dvt.dbtTest",
+        "title": "DVT: dbt test"
+      },
+      {
+        "command": "dvt.dbtBuild",
+        "title": "DVT: dbt build"
+      },
+      {
+        "command": "dvt.dbtCompile",
+        "title": "DVT: dbt compile"
+      },
+      {
+        "command": "dvt.dbtRunModel",
+        "title": "DVT: dbt run (current model)"
+      },
+      {
+        "command": "dvt.dbtTestModel",
+        "title": "DVT: dbt test (current model)"
+      },
+      {
+        "command": "dvt.dbtBuildModel",
+        "title": "DVT: dbt build (current model)"
+      }
+    ],
+    "configuration": {
+      "title": "DVT",
+      "properties": {
+        "dvt.dbtPath": {
+          "type": "string",
+          "default": "dbt",
+          "description": "Path to the dbt CLI executable. Defaults to 'dbt' on PATH."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "npm run build:ext && npm run build:webview",
+    "build:ext": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "build:webview": "esbuild src/webview/lineage/lineage.ts --bundle --outfile=dist/lineage.js --format=iife --platform=browser",
+    "watch": "npm run build:ext -- --watch & npm run build:webview -- --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/dagre": "^0.7.54",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^2.0.4",
+    "dagre": "^0.8.5",
+    "yaml": "^2.7.0"
+  }
+}

@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: user_activity
+    description: User activity summary with event counts and active days
+    columns:
+      - name: user_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: total_events
+        description: Total number of events
+      - name: active_days
+        description: Number of distinct days with activity
+
+  - name: daily_active_users
+    description: Daily active user counts and event totals
+    columns:
+      - name: event_date
+        description: Date
+        tests:
+          - unique
+          - not_null
+      - name: active_users
+        description: Count of distinct active users

@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: warehouse
+    description: Transformed tables from the warehouse dbt project
+    tables:
+      - name: dim_users
+        description: User dimension from warehouse project
+        columns:
+          - name: user_id
+            description: Primary key
+          - name: email
+            description: User email
+          - name: created_at
+            description: Account creation date
+
+      - name: fct_events
+        description: Event fact table from warehouse project
+        columns:
+          - name: event_id
+            description: Primary key
+          - name: user_id
+            description: Foreign key to users
+          - name: event_type
+            description: Type of event
+          - name: occurred_at
+            description: Event timestamp

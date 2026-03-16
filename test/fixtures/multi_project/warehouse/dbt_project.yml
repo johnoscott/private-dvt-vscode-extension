@@ -1,0 +1,23 @@
+name: warehouse
+version: '1.0.0'
+config-version: 2
+
+profile: warehouse
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+snapshot-paths: ["snapshots"]
+analysis-paths: ["analyses"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  warehouse:
+    raw:
+      +materialized: view
+    transform:
+      +materialized: table

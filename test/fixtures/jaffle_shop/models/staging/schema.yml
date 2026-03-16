@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Cleaned customer data from the raw source
+    columns:
+      - name: customer_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: Customer first name
+      - name: last_name
+        description: Customer last name
+
+  - name: stg_orders
+    description: Cleaned order data with renamed columns
+    columns:
+      - name: order_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key to stg_customers
+      - name: order_date
+        description: Date the order was placed
+      - name: status
+        description: Order status
+
+  - name: stg_payments
+    description: Cleaned payment data with amount converted to dollars
+    columns:
+      - name: payment_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key to stg_orders
+      - name: payment_method
+        description: Payment method used
+      - name: amount
+        description: Amount in dollars (converted from cents)
